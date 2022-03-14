@@ -101,14 +101,14 @@ describe('Custom ZKU Test', function () {
        * bridge tokens from l1 to l2
        */
 
-      const aliceKeypair = new Keypair() // contains private and public keys
+      const alonKeypair = new Keypair() // contains private and public keys
   
-      // Alice deposits into tornado pool
-      const aliceDepositAmount = utils.parseEther('0.08')
-      const aliceDepositUtxo = new Utxo({ amount: aliceDepositAmount, keypair: aliceKeypair })
+      // Alon deposits into tornado pool
+      const alonDepositAmount = utils.parseEther('0.08')
+      const alonDepositUtxo = new Utxo({ amount: alonDepositAmount, keypair: alonKeypair })
       const { args, extData } = await prepareTransaction({
         tornadoPool,
-        outputs: [aliceDepositUtxo],
+        outputs: [alonDepositUtxo],
       })
   
       const onTokenBridgedData = encodeDataForBridge({
@@ -118,12 +118,12 @@ describe('Custom ZKU Test', function () {
   
       const onTokenBridgedTx = await tornadoPool.populateTransaction.onTokenBridged(
         token.address,
-        aliceDepositUtxo.amount,
+        alonDepositUtxo.amount,
         onTokenBridgedData,
       )
       // emulating bridge. first it sends tokens to omnibridge mock then it sends to the pool
-      await token.transfer(omniBridge.address, aliceDepositAmount)
-      const transferTx = await token.populateTransaction.transfer(tornadoPool.address, aliceDepositAmount)
+      await token.transfer(omniBridge.address, alonDepositAmount)
+      const transferTx = await token.populateTransaction.transfer(tornadoPool.address, alonDepositAmount)
   
       await omniBridge.execute([
         { who: token.address, callData: transferTx.data }, // send tokens to pool
@@ -131,16 +131,16 @@ describe('Custom ZKU Test', function () {
       ])
   
       // withdraws a part of his funds from the shielded pool
-      const aliceWithdrawAmount = utils.parseEther('0.05')
+      const alonWithdrawAmount = utils.parseEther('0.05')
       const recipient = '0xDeaD00000000000000000000000000000000BEEf'
-      const aliceChangeUtxo = new Utxo({
-        amount: aliceDepositAmount.sub(aliceWithdrawAmount),
-        keypair: aliceKeypair,
+      const alonChangeUtxo = new Utxo({
+        amount: alonDepositAmount.sub(alonWithdrawAmount),
+        keypair: alonKeypair,
       })
       await transaction({
         tornadoPool,
-        inputs: [aliceDepositUtxo],
-        outputs: [aliceChangeUtxo],
+        inputs: [alonDepositUtxo],
+        outputs: [alonChangeUtxo],
         recipient: recipient,
         isL1Withdrawal: true,
       })
@@ -152,7 +152,7 @@ describe('Custom ZKU Test', function () {
       expect(omniBridgeBalance).to.be.equal(aliceWithdrawAmount)
       console.log("omniBridge Balance: ", omniBridgeBalance.toString())
       const tornadoPoolBal = await token.balanceOf(tornadoPool.address)
-      expect(tornadoPoolBal).to.be.equal(aliceChangeUtxo.amount)
+      expect(tornadoPoolBal).to.be.equal(alonChangeUtxo.amount)
       console.log("tornadoPool Balance: ", tornadoPoolBal.toString())
     })
   })
